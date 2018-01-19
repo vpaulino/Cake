@@ -9,10 +9,10 @@ where each microservice source code is grouped in a folder inside the source fol
 ## Struture
 
 -Src <br/>
---AppServc2
---AppServc
---Libs
--Tests
+--AppServc2 <br/>
+--AppServc <br/>
+--Libs <br/>
+-Tests <br/>
 
 ### Microservices
 
