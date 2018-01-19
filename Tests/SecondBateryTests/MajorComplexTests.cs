@@ -8,6 +8,7 @@ namespace SecondBateryTests
         [TestMethod]
         public void TestMethod3()
         {
+            Assert.IsTrue(true);
         }
     }
 }
