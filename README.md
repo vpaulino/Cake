@@ -30,6 +30,6 @@ h2. Conventions
 
 The folder structure of this solution helped in many ways.
 
-# Build source projects
-# Running tests
-# set version on the services per microservice using the Directory.Build.Props file per microservice
+1. Build source projects
+2. Running tests
+3. set version on the services per microservice using the Directory.Build.Props file per microservice
