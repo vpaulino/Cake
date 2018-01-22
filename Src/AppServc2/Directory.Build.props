@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+
+    <PropertyGroup>
+        <VersionPrefix>20.2.0</VersionPrefix>
+        <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+        <Authors>Vitor Paulino</Authors>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!--<codeAnalysisRuleSet>../../stylecop.ruleset</codeAnalysisRuleSet>-->
+        <Company>The Company</Company>
+        <Copyright>The Company 2018-$([System.DateTime]::UtcNow.Year)</Copyright>
+        <GenerateAssemblyCompanyAttribute>true</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyCopyrightAttribute>true</GenerateAssemblyCopyrightAttribute>
+        <GenerateAssemblyInformationalVersionAttribute>true</GenerateAssemblyInformationalVersionAttribute>
+        <GenerateAssemblyProductAttribute>true</GenerateAssemblyProductAttribute>
+        <LangVersion>7.1</LangVersion>
+    </PropertyGroup>
+</Project>

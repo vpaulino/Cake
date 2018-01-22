@@ -1,7 +1,10 @@
 #addin nuget:?package=SharpZipLib&version=0.86.0
 #addin nuget:?package=Cake.Compression&version=0.1.4
+#addin nuget:?package=Cake.VersionReader
+#addin nuget:?package=Cake.Incubator
 
-
+using Cake.VersionReader;
+using Cake.Incubator;
 using Cake.Compression;
 
 var target = Argument<string>("target","FullBuild");
@@ -12,12 +15,14 @@ var publishPath = Argument<string>("publishPath","./publish");
 var sourcePath = Argument<string>("sourcePath","./Src");
 var testsPath = Argument<string>("testsPath","./Tests");
 var solutionName = Argument<string>("solutionName","TestCake.sln");
+var buildNumber =  Argument<int>("buildNumber",999999);
 var versionSufix = "1.0.0";
-var versionName = "rc";
+var pre = HasArgument("pre");
 var unitTestsResultFileName = "UnitTestResults.trx";
 var applicationToBuildPathPattern = Argument<string>("appName","**");
 
-Information($"applicationToBuildPathPattern: {applicationToBuildPathPattern}");
+Information($"pre: {pre}");
+Information($"buildNumber: {buildNumber}");
 
 TaskSetup((ctx)=>
 {
@@ -43,20 +48,6 @@ Task("NugetRestore")
     })
      .DeferOnError();
 
-// Task("Build")
-//     .IsDependentOn("NugetRestore")
-//     .Does(()=>
-//     {
-//         //DotNetCoreBuild("TestCake.sln");
-//         var settings = new DotNetCoreBuildSettings
-//         {
-//             Configuration = configuration,
-//             NoRestore = true
-//         };
-
-//         DotNetCoreBuild(solutionName, settings);
-
-//     });
  
  Task("Build")
  .IsDependentOn("Clean")
@@ -64,10 +55,11 @@ Task("NugetRestore")
 .DoesForEach(GetFiles($"{sourcePath}/{applicationToBuildPathPattern}/**/*.csproj"), (file) => 
     {
         var projectPath = file.FullPath;
+        
          var settings = new DotNetCoreBuildSettings
         {
             Configuration = configuration,
-            NoRestore = true
+            NoRestore = true,
         };
 
         DotNetCoreBuild(projectPath, settings);
@@ -104,7 +96,14 @@ Task("NugetPack")
 .IsDependentOn("Tests")
  .DoesForEach(GetFiles($"{sourcePath}/Libs/**/*.csproj"), (file) => 
     {
-           
+            var versionXPath = "/Project/PropertyGroup/VersionPrefix";
+
+            var versionSufix = XmlPeek(file.FullPath, versionXPath + "/text()");
+           if(pre)
+           {
+                versionSufix = $"{versionSufix}-pre{buildNumber}";
+           }
+
             var publishFolder =  $"{publishPath}/nugets/";
               var settings = new DotNetCorePackSettings
             {
@@ -125,7 +124,10 @@ Task("Publish")
  .DoesForEach(GetFiles($"{sourcePath}/{applicationToBuildPathPattern}/**/*Host.csproj"), (file) => 
     {
                  var publishProjectName = file.GetFilename().ToString().Replace(".csproj",string.Empty);
-                 var hostPublishFolder =  $"{publishPath}/{publishProjectName}/";
+                 var assemblyPath = GetProjectAssembly(file.FullPath,configuration);
+                 var versionSuffix = GetFullVersionNumber(assemblyPath);
+                 var hostPublishFolder =  $"{publishPath}/{publishProjectName}-{versionSuffix}/";
+                
                 var settings = new DotNetCorePublishSettings
                 {
                    
@@ -138,23 +140,12 @@ Task("Publish")
 
 Task("Arquive")
  .IsDependentOn("Tests")
-.DoesForEach(GetFiles($"{sourcePath}/{applicationToBuildPathPattern}/**//*Host.csproj"), (file) => 
-    {
-      
-        var publishProjectName = file.GetFilename().ToString().Replace(".csproj",string.Empty);
-        var hostPublishFolder =  $"{publishPath}/{publishProjectName}/";
-        var settings = new DotNetCorePublishSettings
-        {
-            
-            Configuration = configuration,
-            OutputDirectory = hostPublishFolder,
-        
-        };
-    
-        ZipCompress(hostPublishFolder, $"{artifactsPath}/{publishProjectName}-{versionSufix}.zip");
-    
- 
-});
+.DoesForEach(GetDirectories($"{publishPath}/*"), (directory) => 
+{    
+        Information($"{directory}.zip");
+        ZipCompress(directory, $"{directory}.zip");
+
+}).DeferOnError();
 
 Task("FullBuild")
 .IsDependentOn("Clean")

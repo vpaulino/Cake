@@ -34,14 +34,14 @@ The folder structure of this solution helped in many ways.
 
 1. Build source projects
 2. Running tests
-3. set version on the services per microservice using the Directory.Build.Props file per microservice
+3. set version on the services dlls per microservice using the Directory.Build.Props file per microservice
 4. parameterized build per host. this allows saving time and resources when building large codebase
 
 ## Execute cake build
 
 To a full list of the parameters see inside the script build.cake
 
-the command to execute is: 
+the command to execute the build for only one service is: 
 
- ./build.ps1  -ScriptArgs '--appName="AppServc2"'
+.\build.ps1 -t build --buildNumber=123123 --appName="AppSrvc"
 
