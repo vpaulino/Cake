@@ -7,24 +7,34 @@ using Cake.Compression;
 var target = Argument<string>("target","FullBuild");
 var configuration = Argument<string>("configuration","Release");
 
-var unitTestsResultFileName = "UnitTestResults.xml";
-var testsResultFolder = "./TestsResults/";
+var artifactsPath = "./artifacts";
+var publishPath = "./publish";
+var solutionName = "TestCake.sln";
+
+var unitTestsResultFileName = "UnitTestResults.trx";
+
+
+TaskSetup((ctx)=>
+{
+    if(ctx.Task.Name.Equals("Tests"))
+     EnsureDirectoryExists($"{artifactsPath}/TestResults");
+    
+});
 
 
 Task("Clean")
     .Does(()=>
     {
         CleanDirectories("./Tests/**/TestResults");
-        CleanDirectory("./artifacts");
-        CleanDirectory("./publish");
+        CleanDirectory(artifactsPath);
+        CleanDirectory(publishPath);
     });
 
 Task("NugetRestore")
-
 .Does(()=>
 {
     
-    NuGetRestore("TestCake.sln");
+    NuGetRestore(solutionName);
 });
 
 Task("Build")
@@ -37,7 +47,7 @@ Task("Build")
             Configuration = configuration,
         };
 
-        DotNetCoreBuild("TestCake.sln", settings);
+        DotNetCoreBuild(solutionName, settings);
 
     });
 
@@ -46,37 +56,43 @@ Task("Tests")
     .Does(()=>
     {
            var projectFiles = GetFiles("./Tests/**/*.csproj");
-                var settings = new DotNetCoreTestSettings
-                {
-                    // Outputing test results as XML so that VSTS can pick it up
-                    ArgumentCustomization = (args)=>
-                    {
-                                //args.Append("--logger \"trx;LogFileName=TestResults.xml\"")
-                                args.Append($"--logger \"trx;LogFileName={unitTestsResultFileName}\"");
-                                args.Append("--filter \"TestCategory=Unit|Category=Unit\"");
-                                 return args;
-                    } 
-                };
+              
             foreach(var file in projectFiles)
             {
-                               
+                 var projectName = file.GetFilename().ToString().Replace(".csproj",string.Empty);
+
+                  var settings = new DotNetCoreTestSettings
+                    {
+                       
+                        // Outputing test results as XML so that VSTS can pick it up
+                        ArgumentCustomization = (args)=>
+                        {
+                                    //args.Append("--logger \"trx;LogFileName=TestResults.xml\"")
+                                    args.Append($"--logger \"trx;LogFileName={projectName}.trx\"");
+                                    args.Append("--filter \"TestCategory=Unit|Category=Unit\"");
+                                    return args;
+                        } 
+                    };               
                 DotNetCoreTest(file.FullPath,settings);
             }
+
+            
+            CopyFiles("./Tests/**/TestResults/*.trx",$"{artifactsPath}/TestResults");
     });
 
 
-Task("NugetsPack")
-//.IsDependentOn("Tests")
+Task("NugetPack")
+.IsDependentOn("Tests")
 .Does(()=>{
            
-            var publishFolder =  $"./publish/nugets/";
+            var publishFolder =  $"{publishPath}/nugets/";
               var settings = new DotNetCorePackSettings
             {
                 Configuration = configuration,
                 OutputDirectory =  publishFolder,
                 NoDependencies = false,
                 NoRestore = true,
-                VersionSuffix = "rc"
+                VersionSuffix = "1.0.0"
 
             };
 
@@ -100,13 +116,12 @@ Task("Publish")
             foreach(var file in projectFiles)
             {
                  var publishProjectName = file.GetFilename().ToString().Replace(".csproj",string.Empty);
-                 var hostPublishFolder =  $"./publish/{publishProjectName}/";
+                 var hostPublishFolder =  $"{publishPath}/{publishProjectName}/";
                 var settings = new DotNetCorePublishSettings
                 {
                    
                     Configuration = configuration,
                     OutputDirectory = hostPublishFolder,
-                
                 };
                 
                 DotNetCorePublish(file.ToString(), settings);
@@ -117,14 +132,14 @@ Task("Publish")
     });
 
 Task("Arquive")
-.IsDependentOn("Publish")
+ .IsDependentOn("Tests")
 .Does(()=>{
      
             var projectFiles = GetFiles("./Src/**/*Host.csproj");
             foreach(var file in projectFiles)
             {
                  var publishProjectName = file.GetFilename().ToString().Replace(".csproj",string.Empty);
-                 var hostPublishFolder =  $"./publish/{publishProjectName}/";
+                 var hostPublishFolder =  $"{publishPath}/{publishProjectName}/";
                 var settings = new DotNetCorePublishSettings
                 {
                    
@@ -133,7 +148,7 @@ Task("Arquive")
                 
                 };
                 
-                 ZipCompress(hostPublishFolder, $"./artifacts/{publishProjectName}.zip");
+                 ZipCompress(hostPublishFolder, $"{artifactsPath}/{publishProjectName}.zip");
              }
  
 });
