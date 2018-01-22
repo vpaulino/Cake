@@ -138,7 +138,7 @@ Task("Publish")
 
 Task("Arquive")
  .IsDependentOn("Tests")
-.DoesForEach(GetFiles($"{sourcePath}/{applicationToBuildPathPattern}/*Host.csproj"), (file) => 
+.DoesForEach(GetFiles($"{sourcePath}/{applicationToBuildPathPattern}/**//*Host.csproj"), (file) => 
     {
       
         var publishProjectName = file.GetFilename().ToString().Replace(".csproj",string.Empty);
