@@ -13,6 +13,8 @@ where each microservice source code is grouped in a folder inside the source fol
 --AppServc <br/>
 --Libs <br/>
 -Tests <br/>
+--AppServc2 <br/>
+--AppServc <br/>
 
 ### Microservices
 
@@ -24,7 +26,7 @@ the Libs folder represents all the Libs that this solution export as package nug
 
 ### Tests
 
-The tests folder groups all the tests in the solution
+The tests folder groups all the tests in the solution per microservice host application
 
 ## Conventions
 
@@ -33,3 +35,13 @@ The folder structure of this solution helped in many ways.
 1. Build source projects
 2. Running tests
 3. set version on the services per microservice using the Directory.Build.Props file per microservice
+4. parameterized build per host. this allows saving time and resources when building large codebase
+
+## Execute cake build
+
+To a full list of the parameters see inside the script build.cake
+
+the command to execute is: 
+
+ ./build.ps1  -ScriptArgs '--appName="AppServc2"'
+
